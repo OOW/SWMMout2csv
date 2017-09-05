@@ -1,5 +1,5 @@
 // SWMMout2csv.cpp : Defines the entry point for the console application.
-// SWMMout2csv version working 0.8.1
+// SWMMout2csv version working 0.8.2
 
 #include "stdafx.h"
 #include <stdio.h>     //printf, scanf, NULL 
@@ -45,7 +45,7 @@ int LINK_PAR_COUNT; // flow,depth,velocity,volume,capacity
 int SYSTEM_PAR_COUNT;
 
 //vector used to store the summary information for log.txt
-vector<int> SUMMARY_INFO;
+map<string, size_t> SUMMARY_INFO;
 
 //Defined Functions
 // Extract flow rate; float type -4 bytes
@@ -100,9 +100,9 @@ void readHead(FILE * f) {
 	int idNumHead = readInt(f);
 	int version = readInt(f);
 	int flowunits = readInt(f); // not used currently
-	SUMMARY_INFO.push_back(idNumHead);
-	SUMMARY_INFO.push_back(version);
-	SUMMARY_INFO.push_back(flowunits);
+	SUMMARY_INFO.insert(make_pair("idNumHead", idNumHead));
+	SUMMARY_INFO.insert(make_pair("version", version));
+	SUMMARY_INFO.insert(make_pair("flowunits", flowunits));
 	cout << "SWMM Version: " << version << endl << '\n';
 	//cout << idNumHead << " " << version << " " << flowunits << endl;
 
@@ -133,8 +133,8 @@ void readTail(FILE * f) {
 	NTIMESTEPS = readInt(f);
 	int errorcode = readInt(f);
 	int idNumTail = readInt(f);
-	SUMMARY_INFO.push_back(errorcode);
-	SUMMARY_INFO.push_back(idNumTail);
+	SUMMARY_INFO.insert(make_pair("errorcode", errorcode));
+	SUMMARY_INFO.insert(make_pair("idNumTail", idNumTail));
 }
 // "int counts"  = nodesCounts... when skipping, make counts = 0 
 void readVarCodeBytes(FILE *f, int counts) {
@@ -732,7 +732,7 @@ void writeLogTXT(string LOG_PATH, double elapsed_mins) {
 	//vector SUMMARY_INFO: 0 inNumHead, 1 version, 2 flowunits, 3 errorcode, 4 idNumTail, 5 extractSubcatchments, 6 extractNodes, 7 extractLinks, 8 extractSystem, 
 
 	// Write the information read from head section to log.txt
-	logOut << "SWMM Version: " << SUMMARY_INFO[1] << endl << '\n';
+	logOut << "SWMM Version: " << SUMMARY_INFO["version"] << endl << '\n';
 	//logOut << idNumHead << " " << version << " " << flowunits << endl;
 	logOut << "Elements Reported:" << endl;
 	//logOut << SUMMARY_INFO[0] << " " << SUMMARY_INFO[1] << " " << SUMMARY_INFO[2] << endl;
@@ -742,14 +742,14 @@ void writeLogTXT(string LOG_PATH, double elapsed_mins) {
 	logOut << "Pollutants: " << POLLUTANT_COUNT << endl << '\n';
 
 	logOut << "Elements Extracted:" << endl;
-	logOut << "Subcatchments: " << SUMMARY_INFO[5] << endl;
-	logOut << "Nodes: " << SUMMARY_INFO[6] << endl;
-	logOut << "Links: " << SUMMARY_INFO[7] << endl;
-	logOut << "System: " << SUMMARY_INFO[8] << endl << '\n';
+	logOut << "Subcatchments: " << SUMMARY_INFO["subcatchmentsExtracted"] << endl;
+	logOut << "Nodes: " << SUMMARY_INFO["nodesExtracted"] << endl;
+	logOut << "Links: " << SUMMARY_INFO["linksExtracted"] << endl;
+	logOut << "System: " << SUMMARY_INFO["systemExtracted"] << endl << '\n';
 
 
 	//Write the information read from tail section to log.txt
-	logOut << "Timesteps: " << NTIMESTEPS << "; Error Code: " << SUMMARY_INFO[3] << "; ID NUM: " << SUMMARY_INFO[4] << endl;
+	logOut << "Timesteps: " << NTIMESTEPS << "; Error Code: " << SUMMARY_INFO["errorcode"] << "; ID NUM: " << SUMMARY_INFO["idNumTail"] << endl;
 	logOut << "Complete, Elapsed Time (min): "; logOut << elapsed_mins << endl;
 	logOut.close();
 }
@@ -802,6 +802,8 @@ int main(int argc, char* argv[])
 		FILE_PATH_NODES = combinedPathNode.c_str();
 		string combinedPathLink = combinePath(inputPath, parameterList["linksFileName"]);
 		FILE_PATH_LINKS = combinedPathLink.c_str();
+		// initial FILE_PATH_SYSTEM, just for file type recognition in function "generateFileName"
+		FILE_PATH_SYSTEM = "";
 		string startTime = parameterList["reader_startDateTime"];
 		string endTime = parameterList["reader_endDateTime"];
 
@@ -933,25 +935,28 @@ int main(int argc, char* argv[])
 		{
 			// get the number of elements extracted, and add to vectot SUMMARY.INFO
 			subcatchmentsExtracted = selectedSubcatchmentsIndex.size();
-			SUMMARY_INFO.push_back(subcatchmentsExtracted);
+			SUMMARY_INFO.insert(make_pair("subcatchmentsExtracted", subcatchmentsExtracted));
 			// Write the extraction reulsts to the output file
 			writeOutput(subcatchmentVariables, selectedSubcatchmentsIndex, reportSubcatchmentNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_SUBCATCHMENTS, i);
 
 		}
+
 		// write node 
 		if (extractNodes == 1 && selectedNodesIndex.size() > 0)
 		{
 			// get the number of elements extracted, and add to vectot SUMMARY.INFO
 			nodesExtracted = selectedNodesIndex.size();
-			SUMMARY_INFO.push_back(nodesExtracted);
+			SUMMARY_INFO.insert(make_pair("nodesExtracted", nodesExtracted));
 			// Write the extraction reulsts to the output file
 			writeOutput(nodeVariables, selectedNodesIndex, reportNodeNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_NODES, i);
 		}
+
+
 		//  write links
 		if (extractLinks == 1 && selectedLinksIndex.size() > 0)
 		{
 			linksExtracted = selectedLinksIndex.size();
-			SUMMARY_INFO.push_back(linksExtracted);
+			SUMMARY_INFO.insert(make_pair("linksExtracted", linksExtracted));
 			// Write the extraction reulsts to the output file
 			writeOutput(linkVariables, selectedLinksIndex, reportLinkNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_LINKS, i);
 		}
@@ -960,10 +965,12 @@ int main(int argc, char* argv[])
 		if (extractSystem == 1) {
 
 			systemExtracted = 1;
-			SUMMARY_INFO.push_back(systemExtracted);
+			SUMMARY_INFO.insert(make_pair("systemExtracted", systemExtracted));
+
 			// create and open system variables output file, 0 is a place holder here
 			string filename = generateFileName(FILE_PATH_SYSTEM, 0, reportPollutantNames);
 			const char *sysResultsPath = filename.c_str();
+			cout << FILE_PATH_SYSTEM << endl;
 			ofstream sysResultsOut; sysResultsOut.open(sysResultsPath);
 
 			//System Headers
@@ -1037,6 +1044,7 @@ int main(int argc, char* argv[])
 			} // end timestep loop
 		}
 
+
 		// Output elements extracted
 
 
@@ -1050,7 +1058,7 @@ int main(int argc, char* argv[])
 		clock_t end = clock();
 		double elapsed_mins = round(double(end - begin) / CLOCKS_PER_SEC / 60 * 100.0) / 100.0;
 		//vector SUMMARY_INFO: 0 inNumHead, 1 version, 2 flowunits, 3 errorcode, 4 idNumTail, 5 extractSubcatchments, 6 extractNodes, 7 extractLinks, 8 extractSystem
-		cout << "Timesteps: " << NTIMESTEPS << "; Error Code: " << SUMMARY_INFO[3] << "; ID NUM: " << SUMMARY_INFO[4] << endl;
+		cout << "Timesteps: " << NTIMESTEPS << "; Error Code: " << SUMMARY_INFO["errorcode"] << "; ID NUM: " << SUMMARY_INFO["idNumTail"] << endl;
 		cout << "Complete, Elapsed Time (min): "; cout << elapsed_mins << endl;
 
 		// generate the file name of log.txt 
