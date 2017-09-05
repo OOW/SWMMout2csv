@@ -770,7 +770,7 @@ int main(int argc, char* argv[])
 	//Read parameter from batch file
 	//or use default input file "model_post_process_input_parameters.csv"
 	if (argc == 1) {
-		CSV_PARAMETER_INPUT = "model_post_process_input_parameters_037.csv";
+		CSV_PARAMETER_INPUT = "SWMMout2csv_input_082.csv";
 	}
 	if (argc == 2) {
 		CSV_PARAMETER_INPUT = argv[1];
