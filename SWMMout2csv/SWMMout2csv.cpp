@@ -1,5 +1,5 @@
 // SWMMout2csv.cpp : Defines the entry point for the console application.
-// SWMMout2csv version working 0.8.2
+// SWMMout2csv version working 0.8.3
 
 #include "stdafx.h"
 #include <stdio.h>     //printf, scanf, NULL 
@@ -23,6 +23,8 @@ using namespace std;
 //Define input file names
 
 const char *CSV_PARAMETER_INPUT;
+//Assign default input parameters file; update for each version
+const char *CSV_PARAMETER_INPUT_CON = "SWMMout2csv_input_083.csv";
 const char *LOG_PATH;
 const char *FILE_PATH_SUBCATCHMENTS;
 const char *FILE_PATH_NODES;
@@ -191,7 +193,7 @@ void check_file_exist(string filename) {
 	file.close();
 }
 
-//Read "model_post_process_input_parameters.csv"
+//Read input parameters file
 map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	string parameterName, filePath, notes;
 	map<string, string> parameterList;
@@ -236,7 +238,7 @@ map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	}
 	return parameterList;
 }
-//read in multiple SWMM output files from input parameter .csv("model_post_process_input_parameters.csv")
+//read in multiple SWMM output files from input parameter .csv(input parameters file)
 vector<string> readMutipleSWMMInput(string filePath) {
 	stringstream ss_input(filePath);
 	string temp;
@@ -768,18 +770,18 @@ int main(int argc, char* argv[])
 	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
 	//Read parameter from batch file
-	//or use default input file "model_post_process_input_parameters.csv"
+	//or use default input file
 	if (argc == 1) {
-		CSV_PARAMETER_INPUT = "SWMMout2csv_input_082.csv";
+		CSV_PARAMETER_INPUT = CSV_PARAMETER_INPUT_CON;
 	}
 	if (argc == 2) {
 		CSV_PARAMETER_INPUT = argv[1];
 	}
 
-	// Check if "model_post_process_input_parameters.csv" exists in current working directory
+	// Check if input parameters file exists in current working directory
 	check_file_exist(CSV_PARAMETER_INPUT);
 
-	// Read input parameters from  "model_post_process_input_parameters.csv" 
+	// Read input parameters from  input parameters file 
 	map<string, string> parameterList = readCSVContent(CSV_PARAMETER_INPUT);
 
 	outputPath = parameterList["reader_output_path"].c_str();
@@ -978,40 +980,40 @@ int main(int argc, char* argv[])
 			sysResultsOut << "DateTime,";
 			if (SYSTEM_PAR_COUNT == 14) {
 				sysResultsOut <<
-					"air temperature,"
-					"total rainfall,"
-					"total snow depth,"
-					"actual evaporation,"
-					"total runoff flow,"
-					"total dry weather inflow,"
-					"total groundwater inflow,"
-					"total RDII inflow,"
-					"total direct inflow,"
-					"total external inflow,"
-					"total external flooding,"
-					"total outflow from outfalls,"
-					"total nodal storage volume,"
-					"potential evaporation,"
+					"air_temperature,"
+					"rainfall_intensity,"
+					"snow_depth,"
+					"infiltration,"
+					"runoff_flow,"
+					"dry_weather_inflow,"
+					"groundwater_inflow,"
+					"RDII_inflow,"
+					"external_inflow,"
+					"total_lateral_inflow,"
+					"flooding_outflow,"
+					"outfall_outflow,"
+					"storage_volume,"
+					"evaporation,"
 					//"daily potential evapotranspiration"
 					<< endl;
 			}
 			if (SYSTEM_PAR_COUNT == 15) {
 				sysResultsOut <<
-					"air temperature,"
-					"total rainfall,"
-					"total snow depth,"
-					"actual evaporation,"
-					"total runoff flow,"
-					"total dry weather inflow,"
-					"total groundwater inflow,"
-					"total RDII inflow,"
-					"total direct inflow,"
-					"total external inflow,"
-					"total external flooding,"
-					"total outflow from outfalls,"
-					"total nodal storage volume,"
-					"potential evaporation,"
-					"daily potential evapotranspiration"
+					"air_temperature,"
+					"rainfall_intensity,"
+					"snow_depth,"
+					"infiltration,"
+					"runoff_flow,"
+					"dry_weather_inflow,"
+					"groundwater_inflow,"
+					"RDII_inflow,"
+					"external_inflow,"
+					"total_lateral_inflow,"
+					"flooding_outflow,"
+					"outfall_outflow,"
+					"storage_volume,"
+					"evaporation,"
+					"potential ET"
 					<< endl;
 			}
 

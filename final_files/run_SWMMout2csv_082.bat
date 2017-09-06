@@ -1,2 +1,0 @@
-SWMMout2csv_082.exe SWMMout2csv_input_082.csv
-pause
