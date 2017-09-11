@@ -1,5 +1,5 @@
 // SWMMout2csv.cpp : Defines the entry point for the console application.
-// SWMMout2csv version working 0.8.3
+// SWMMout2csv version working 0.8.4
 
 #include "stdafx.h"
 #include <stdio.h>     //printf, scanf, NULL 
@@ -20,11 +20,10 @@
 using namespace std;
 
 // Define constants
+// version number
+const char *version = "0.8.4";
 //Define input file names
-
 const char *CSV_PARAMETER_INPUT;
-//Assign default input parameters file; update for each version
-const char *CSV_PARAMETER_INPUT_CON = "SWMMout2csv_input_083.csv";
 const char *LOG_PATH;
 const char *FILE_PATH_SUBCATCHMENTS;
 const char *FILE_PATH_NODES;
@@ -32,7 +31,6 @@ const char *FILE_PATH_LINKS;
 const char *FILE_PATH_SYSTEM;
 const char *FILE_PATH_INPUT;
 
-//globe variables(since these varibales are called by multiple functions. they are defined as global to maintain the value from function to function)
 static FILE *FOUT_FILE = NULL; // File pointer
 static int SUBCATCHMENT_COUNT, NODE_COUNT, LINK_COUNT, POLLUTANT_COUNT;
 static int NAMES_OFFSET, PROPERTIES_OFFSET, RESULTS_OFFSET, NTIMESTEPS;
@@ -193,7 +191,7 @@ void check_file_exist(string filename) {
 	file.close();
 }
 
-//Read input parameters file
+//Read "model_post_process_input_parameters.csv"
 map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	string parameterName, filePath, notes;
 	map<string, string> parameterList;
@@ -238,7 +236,7 @@ map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	}
 	return parameterList;
 }
-//read in multiple SWMM output files from input parameter .csv(input parameters file)
+//read in multiple SWMM output files from input parameter .csv("model_post_process_input_parameters.csv")
 vector<string> readMutipleSWMMInput(string filePath) {
 	stringstream ss_input(filePath);
 	string temp;
@@ -402,7 +400,7 @@ vector<size_t> readSelectedVariables(string parameterList) {
 }
 // Check if the entries for variable selection match the number of variables
 // the last entry is the option for pollutants, if 0, do not export any pollutant results, if 1, export all pollutants
-vector<size_t> checkVariables(vector<size_t> variables, int parCount, const char * filePath) {
+vector<size_t> checkVariables(vector<size_t>& variables, int parCount, const char * filePath) {
 	string  variableName;
 	// set variable name for exception
 	if (filePath == FILE_PATH_SUBCATCHMENTS) { variableName = "subcatchments"; }
@@ -433,7 +431,7 @@ vector<size_t> checkVariables(vector<size_t> variables, int parCount, const char
 	return variables;
 }
 // Create output file names
-string generateFileName(const char * filePath, size_t i, vector<string> reportPollutantNames) {
+string generateFileName(const char * filePath, size_t i, vector<string>& reportPollutantNames) {
 	string filename;
 	string variables;
 	string outFileName;
@@ -528,7 +526,7 @@ string generateFileName(const char * filePath, size_t i, vector<string> reportPo
 	return filename;
 }
 // Subset selected variables
-vector<size_t> subsetSelectdElements(vector<string> variableNameList, vector<string> reportVariableNames, const char * filePath) {
+vector<size_t> subsetSelectdElements(vector<string>& variableNameList, vector<string>& reportVariableNames, const char * filePath) {
 	vector<size_t> selectedVariableIndex;
 	if (variableNameList.size() == 0) { // read all reported nodes if input file was empty
 		for (size_t n = 0; n < reportVariableNames.size(); ++n) {
@@ -561,7 +559,7 @@ vector<size_t> subsetSelectdElements(vector<string> variableNameList, vector<str
 	return selectedVariableIndex;
 }
 // Extract selected time period
-vector<size_t> subsetSelectdTime(vector<string> dateTimeList) {
+vector<size_t> subsetSelectdTime(vector<string>& dateTimeList) {
 	vector<size_t> selectedTimeIndex;
 	bool startTimeFound = FALSE;
 	bool endTimeFound = FALSE;
@@ -651,7 +649,7 @@ vector<size_t> subsetSelectdTime(vector<string> dateTimeList) {
 	return selectedTimeIndex;
 }
 //Read and write extraction results to output files
-void writeOutput(vector<size_t>elementsVariables, vector<size_t> selectedElementsIndex, vector<string> reportElementNames, vector<string> reportPollutantNames, vector<size_t> selectedTimeIndex, const char * filePath, size_t i) {
+void writeOutput(vector<size_t>& elementsVariables, vector<size_t>& selectedElementsIndex, vector<string>& reportElementNames, vector<string>& reportPollutantNames, vector<size_t>& selectedTimeIndex, const char * filePath) {
 	// for each variable
 	for (size_t i = 0; i < elementsVariables.size(); ++i) {
 		// if the variable has been selected
@@ -767,21 +765,22 @@ int main(int argc, char* argv[])
 
 	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 	cout << "                            Binary File Reader                                " << endl;
+	cout << "                             version: " << version << "                        " << endl;
 	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
 	//Read parameter from batch file
-	//or use default input file
+	//or use default input file "model_post_process_input_parameters.csv"
 	if (argc == 1) {
-		CSV_PARAMETER_INPUT = CSV_PARAMETER_INPUT_CON;
+		CSV_PARAMETER_INPUT = "SWMMout2csv_input_084.csv";
 	}
 	if (argc == 2) {
 		CSV_PARAMETER_INPUT = argv[1];
 	}
 
-	// Check if input parameters file exists in current working directory
+	// Check if "model_post_process_input_parameters.csv" exists in current working directory
 	check_file_exist(CSV_PARAMETER_INPUT);
 
-	// Read input parameters from  input parameters file 
+	// Read input parameters from  "model_post_process_input_parameters.csv" 
 	map<string, string> parameterList = readCSVContent(CSV_PARAMETER_INPUT);
 
 	outputPath = parameterList["reader_output_path"].c_str();
@@ -939,7 +938,7 @@ int main(int argc, char* argv[])
 			subcatchmentsExtracted = selectedSubcatchmentsIndex.size();
 			SUMMARY_INFO.insert(make_pair("subcatchmentsExtracted", subcatchmentsExtracted));
 			// Write the extraction reulsts to the output file
-			writeOutput(subcatchmentVariables, selectedSubcatchmentsIndex, reportSubcatchmentNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_SUBCATCHMENTS, i);
+			writeOutput(subcatchmentVariables, selectedSubcatchmentsIndex, reportSubcatchmentNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_SUBCATCHMENTS);
 
 		}
 
@@ -950,7 +949,7 @@ int main(int argc, char* argv[])
 			nodesExtracted = selectedNodesIndex.size();
 			SUMMARY_INFO.insert(make_pair("nodesExtracted", nodesExtracted));
 			// Write the extraction reulsts to the output file
-			writeOutput(nodeVariables, selectedNodesIndex, reportNodeNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_NODES, i);
+			writeOutput(nodeVariables, selectedNodesIndex, reportNodeNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_NODES);
 		}
 
 
@@ -960,7 +959,7 @@ int main(int argc, char* argv[])
 			linksExtracted = selectedLinksIndex.size();
 			SUMMARY_INFO.insert(make_pair("linksExtracted", linksExtracted));
 			// Write the extraction reulsts to the output file
-			writeOutput(linkVariables, selectedLinksIndex, reportLinkNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_LINKS, i);
+			writeOutput(linkVariables, selectedLinksIndex, reportLinkNames, reportPollutantNames, selectedTimeIndex, FILE_PATH_LINKS);
 		}
 
 		//System
@@ -980,40 +979,40 @@ int main(int argc, char* argv[])
 			sysResultsOut << "DateTime,";
 			if (SYSTEM_PAR_COUNT == 14) {
 				sysResultsOut <<
-					"air_temperature,"
-					"rainfall_intensity,"
-					"snow_depth,"
-					"infiltration,"
-					"runoff_flow,"
-					"dry_weather_inflow,"
-					"groundwater_inflow,"
-					"RDII_inflow,"
-					"external_inflow,"
-					"total_lateral_inflow,"
-					"flooding_outflow,"
-					"outfall_outflow,"
-					"storage_volume,"
-					"evaporation,"
+					"air temperature,"
+					"total rainfall,"
+					"total snow depth,"
+					"actual evaporation,"
+					"total runoff flow,"
+					"total dry weather inflow,"
+					"total groundwater inflow,"
+					"total RDII inflow,"
+					"total direct inflow,"
+					"total external inflow,"
+					"total external flooding,"
+					"total outflow from outfalls,"
+					"total nodal storage volume,"
+					"potential evaporation,"
 					//"daily potential evapotranspiration"
 					<< endl;
 			}
 			if (SYSTEM_PAR_COUNT == 15) {
 				sysResultsOut <<
-					"air_temperature,"
-					"rainfall_intensity,"
-					"snow_depth,"
-					"infiltration,"
-					"runoff_flow,"
-					"dry_weather_inflow,"
-					"groundwater_inflow,"
-					"RDII_inflow,"
-					"external_inflow,"
-					"total_lateral_inflow,"
-					"flooding_outflow,"
-					"outfall_outflow,"
-					"storage_volume,"
-					"evaporation,"
-					"potential ET"
+					"air temperature,"
+					"total rainfall,"
+					"total snow depth,"
+					"actual evaporation,"
+					"total runoff flow,"
+					"total dry weather inflow,"
+					"total groundwater inflow,"
+					"total RDII inflow,"
+					"total direct inflow,"
+					"total external inflow,"
+					"total external flooding,"
+					"total outflow from outfalls,"
+					"total nodal storage volume,"
+					"potential evaporation,"
+					"daily potential evapotranspiration"
 					<< endl;
 			}
 
