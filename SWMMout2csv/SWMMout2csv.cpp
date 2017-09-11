@@ -24,6 +24,7 @@ using namespace std;
 const char *version = "0.8.4";
 //Define input file names
 const char *CSV_PARAMETER_INPUT;
+const char *CSV_PARAMETER_INPUT_CON = "SWMMout2csv_input_084.csv";
 const char *LOG_PATH;
 const char *FILE_PATH_SUBCATCHMENTS;
 const char *FILE_PATH_NODES;
@@ -771,7 +772,7 @@ int main(int argc, char* argv[])
 	//Read parameter from batch file
 	//or use default input file "model_post_process_input_parameters.csv"
 	if (argc == 1) {
-		CSV_PARAMETER_INPUT = "SWMMout2csv_input_084.csv";
+		CSV_PARAMETER_INPUT = CSV_PARAMETER_INPUT_CON;
 	}
 	if (argc == 2) {
 		CSV_PARAMETER_INPUT = argv[1];
