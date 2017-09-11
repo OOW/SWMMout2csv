@@ -781,7 +781,7 @@ int main(int argc, char* argv[])
 	// Check if input parameters file exists in current working directory
 	check_file_exist(CSV_PARAMETER_INPUT);
 
-	// Read input parameters from inpur parameters file
+	// Read input parameters from input parameters file
 	map<string, string> parameterList = readCSVContent(CSV_PARAMETER_INPUT);
 
 	outputPath = parameterList["reader_output_path"].c_str();
