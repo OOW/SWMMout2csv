@@ -192,7 +192,7 @@ void check_file_exist(string filename) {
 	file.close();
 }
 
-//Read "model_post_process_input_parameters.csv"
+//Read input parameters file
 map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	string parameterName, filePath, notes;
 	map<string, string> parameterList;
@@ -237,7 +237,7 @@ map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	}
 	return parameterList;
 }
-//read in multiple SWMM output files from input parameter .csv("model_post_process_input_parameters.csv")
+//read in multiple SWMM output files from input parameters file
 vector<string> readMutipleSWMMInput(string filePath) {
 	stringstream ss_input(filePath);
 	string temp;
@@ -770,7 +770,7 @@ int main(int argc, char* argv[])
 	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
 	//Read parameter from batch file
-	//or use default input file "model_post_process_input_parameters.csv"
+	//or use default input files file
 	if (argc == 1) {
 		CSV_PARAMETER_INPUT = CSV_PARAMETER_INPUT_CON;
 	}
@@ -778,10 +778,10 @@ int main(int argc, char* argv[])
 		CSV_PARAMETER_INPUT = argv[1];
 	}
 
-	// Check if "model_post_process_input_parameters.csv" exists in current working directory
+	// Check if input parameters file exists in current working directory
 	check_file_exist(CSV_PARAMETER_INPUT);
 
-	// Read input parameters from  "model_post_process_input_parameters.csv" 
+	// Read input parameters from inpur parameters file
 	map<string, string> parameterList = readCSVContent(CSV_PARAMETER_INPUT);
 
 	outputPath = parameterList["reader_output_path"].c_str();
@@ -980,40 +980,40 @@ int main(int argc, char* argv[])
 			sysResultsOut << "DateTime,";
 			if (SYSTEM_PAR_COUNT == 14) {
 				sysResultsOut <<
-					"air temperature,"
-					"total rainfall,"
-					"total snow depth,"
-					"actual evaporation,"
-					"total runoff flow,"
-					"total dry weather inflow,"
-					"total groundwater inflow,"
-					"total RDII inflow,"
-					"total direct inflow,"
-					"total external inflow,"
-					"total external flooding,"
-					"total outflow from outfalls,"
-					"total nodal storage volume,"
-					"potential evaporation,"
+					"air_temperature,"
+					"rainfall_intensity,"
+					"snow_depth,"
+					"infiltration,"
+					"runoff_flow,"
+					"dry_weather_inflow,"
+					"groundwater_inflow,"
+					"RDII_inflow,"
+					"external_inflow,"
+					"total_lateral_inflow,"
+					"flooding_outflow,"
+					"outfall_outflow,"
+					"storage_volume,"
+					"evaporation,"
 					//"daily potential evapotranspiration"
 					<< endl;
 			}
 			if (SYSTEM_PAR_COUNT == 15) {
 				sysResultsOut <<
-					"air temperature,"
-					"total rainfall,"
-					"total snow depth,"
-					"actual evaporation,"
-					"total runoff flow,"
-					"total dry weather inflow,"
-					"total groundwater inflow,"
-					"total RDII inflow,"
-					"total direct inflow,"
-					"total external inflow,"
-					"total external flooding,"
-					"total outflow from outfalls,"
-					"total nodal storage volume,"
-					"potential evaporation,"
-					"daily potential evapotranspiration"
+					"air_temperature,"
+					"rainfall_intensity,"
+					"snow_depth,"
+					"infiltration,"
+					"runoff_flow,"
+					"dry_weather_inflow,"
+					"groundwater_inflow,"
+					"RDII_inflow,"
+					"external_inflow,"
+					"total_lateral_inflow,"
+					"flooding_outflow,"
+					"outfall_outflow,"
+					"storage_volume,"
+					"evaporation,"
+					"potential ET"
 					<< endl;
 			}
 
