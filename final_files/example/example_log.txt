@@ -8,7 +8,7 @@ Pollutants: 0
 
 Elements Extracted:
 Subcatchments: 0
-Nodes: 1
+Nodes: 2
 Links: 2
 System: 0
 
