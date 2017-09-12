@@ -1,0 +1,16 @@
+SWMM Version: 51011
+
+Elements Reported:
+Subcatchments: 0
+Nodes: 3
+Links: 2
+Pollutants: 0
+
+Elements Extracted:
+Subcatchments: 0
+Nodes: 1
+Links: 2
+System: 0
+
+Timesteps: 1440; Error Code: 0; ID NUM: 516114522
+Complete, Elapsed Time (min): 0
