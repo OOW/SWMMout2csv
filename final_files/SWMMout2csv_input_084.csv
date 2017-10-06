@@ -12,6 +12,6 @@ extract Subcatchments,1,1 = TRUE; 0 = FALSE
 extract Nodes,1,1 = TRUE; 0 = FALSE
 extract Links,1,1 = TRUE; 0 = FALSE
 extract System,1,1 = TRUE; 0 = FALSE
-Subcatchment variables,0;0;0;0;1;0;0;0;0,1 = TRUE; 0 = FALSE: rainfall rate; snow depth; evaporation; infiltration loss; runoff flow; groundwater flow; groundwater elevation; soil moisture;pollutants
+Subcatchment variables,0;0;0;0;1;0;0;0;0,1 = TRUE; 0 = FALSE: v5.1+(9 in total) rainfall rate; snow depth; evaporation; infiltration loss; runoff flow; groundwater flow; groundwater elevation; soil moisture;pollutants; v5.0(7 in total): rainfall rate; snow depth; evaporation and infiltration loss; runoff flow; groundwater flow; groundwater elevation;pollutants; 
 Node variables,1;1;0;0;0;0;0,1 = TRUE; 0 = FALSE: water depth; HGL; stored water volume; later inflow; total inflow; surface flooding;pollutants
 Link variables,1;0;0;0;0;0,1 = TRUE; 0 = FALSE: flow rate; depth; velocity; volume; capacity;pollutants
