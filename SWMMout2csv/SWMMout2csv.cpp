@@ -1,5 +1,5 @@
 // SWMMout2csv.cpp : Defines the entry point for the console application.
-// SWMMout2csv version working 0.8.4
+// SWMMout2csv version working 0.8.5
 
 #include "stdafx.h"
 #include <stdio.h>     //printf, scanf, NULL 
@@ -20,11 +20,10 @@
 using namespace std;
 
 // Define constants
-// version number
-const char *version = "0.8.4";
 //Define input file names
+const char *version = "0.8.5";
+
 const char *CSV_PARAMETER_INPUT;
-const char *CSV_PARAMETER_INPUT_CON = "SWMMout2csv_input_084.csv";
 const char *LOG_PATH;
 const char *FILE_PATH_SUBCATCHMENTS;
 const char *FILE_PATH_NODES;
@@ -32,6 +31,7 @@ const char *FILE_PATH_LINKS;
 const char *FILE_PATH_SYSTEM;
 const char *FILE_PATH_INPUT;
 
+//globe variables(since these varibales are called by multiple functions. they are defined as global to maintain the value from function to function)
 static FILE *FOUT_FILE = NULL; // File pointer
 static int SUBCATCHMENT_COUNT, NODE_COUNT, LINK_COUNT, POLLUTANT_COUNT;
 static int NAMES_OFFSET, PROPERTIES_OFFSET, RESULTS_OFFSET, NTIMESTEPS;
@@ -192,7 +192,7 @@ void check_file_exist(string filename) {
 	file.close();
 }
 
-//Read input parameters file
+//Read "model_post_process_input_parameters.csv"
 map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	string parameterName, filePath, notes;
 	map<string, string> parameterList;
@@ -237,7 +237,7 @@ map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	}
 	return parameterList;
 }
-//read in multiple SWMM output files from input parameters file
+//read in multiple SWMM output files from input parameter .csv("model_post_process_input_parameters.csv")
 vector<string> readMutipleSWMMInput(string filePath) {
 	stringstream ss_input(filePath);
 	string temp;
@@ -292,29 +292,42 @@ void outputOpen(const char *filePath) {
 		exit(0);
 	}
 }
+
 // Read selected elements from input files e.g "nodes.txt"
 vector<string> readSelectedElements(const char *filePath) {
 	vector<string> nameList;
-	if (filePath != NULL && filePath[0] != '\0')
+	try
 	{
-		string line; // temporary storage of line value
-					 // Read node lists from input text file
-					 //if no element files (subcatchmentsFileName,nodesFileName,linksFileName) were supplied in input parameter .csv
-					 // leave vector "namelist" blank to read all reported elements
-		ifstream par; par.open(filePath);
-		while (getline(par, line)) {
-			// remove trailing spaces
-			// convert all whitespace characters to a standard space
-			std::replace_if(line.begin(), line.end(), (std::function<int(BYTE)>)::isspace, ' ');
-			//remove the sapce in line and modify the length of the string(http://stackoverflow.com/questions/83439/remove-spaces-from-stdstring-in-c)
-			line.erase(remove_if(line.begin(), line.end(), isspace), line.end());
-			if (line != "") {
-				size_t f = line.find_first_not_of(' ');
-				line = line.substr(f, line.find_last_not_of(' ') - f + 1);
-				// add new name to vector
-				nameList.push_back(line);
+		if (filePath != NULL && filePath[0] != '\0')
+		{
+			string line; // temporary storage of line value
+						 // Read node lists from input text file
+						 //if no element files (subcatchmentsFileName,nodesFileName,linksFileName) were supplied in input parameter .csv
+						 // leave vector "namelist" blank to read all reported elements
+			ifstream par; par.open(filePath);
+			if (!par)
+			{
+				throw " Could not open ";
+			}
+			while (getline(par, line)) {
+				// remove trailing spaces
+				// convert all whitespace characters to a standard space
+				std::replace_if(line.begin(), line.end(), (std::function<int(BYTE)>)::isspace, ' ');
+				//remove the sapce in line and modify the length of the string(http://stackoverflow.com/questions/83439/remove-spaces-from-stdstring-in-c)
+				line.erase(remove_if(line.begin(), line.end(), isspace), line.end());
+				if (line != "") {
+					size_t f = line.find_first_not_of(' ');
+					line = line.substr(f, line.find_last_not_of(' ') - f + 1);
+					// add new name to vector
+					nameList.push_back(line);
+				}
 			}
 		}
+	}
+	catch (const char * e)
+	{
+		cout << "Could not open " << filePath << endl;
+		exit(0);
 	}
 	return nameList;
 }
@@ -464,22 +477,45 @@ string generateFileName(const char * filePath, size_t i, vector<string>& reportP
 	else
 	{
 		if (filePath == FILE_PATH_SUBCATCHMENTS) {
-			switch (i)
+			// in SWMM 5.1, subcatchment has 9 variables including pollutants
+			// in SWMM 5.0, subcatchment has 7 variables including pollutants
+			if (SUMMARY_INFO["version"] >= 51000)
 			{
-			case 0: variables = "_subcatchment_precipitation"; break;
-			case 1: variables = "_subcatchment_snow_Depth"; break;
-			case 2: variables = "_subcatchment_evaporation"; break;
-			case 3: variables = "_subcatchment_infiltration"; break;
-			case 4: variables = "_subcatchment_runoff"; break;
-			case 5: variables = "_subcatchment_gw_flow"; break;
-			case 6: variables = "_subcatchment_gw_ele"; break;
-			case 7: variables = "_subcatchment_soil_moisture"; break;
-			default:
-				break;
+				switch (i)
+				{
+				case 0: variables = "_subcatchment_precipitation"; break;
+				case 1: variables = "_subcatchment_snow_Depth"; break;
+				case 2: variables = "_subcatchment_evaporation"; break;
+				case 3: variables = "_subcatchment_infiltration"; break;
+				case 4: variables = "_subcatchment_runoff"; break;
+				case 5: variables = "_subcatchment_gw_flow"; break;
+				case 6: variables = "_subcatchment_gw_ele"; break;
+				case 7: variables = "_subcatchment_soil_moisture"; break;
+				default:
+					break;
+				}
+				if (i > 7)
+				{
+					variables = "_subcatchment_" + reportPollutantNames[i - 8];
+				}
 			}
-			if (i > 7)
+			else
 			{
-				variables = "_subcatchment_" + reportPollutantNames[i - 8];
+				switch (i)
+				{
+				case 0: variables = "_subcatchment_precipitation"; break;
+				case 1: variables = "_subcatchment_snow_Depth"; break;
+				case 2: variables = "_subcatchment_evap_infil"; break;
+				case 3: variables = "_subcatchment_runoff"; break;
+				case 4: variables = "_subcatchment_gw_flow"; break;
+				case 5: variables = "_subcatchment_gw_ele"; break;
+				default:
+					break;
+				}
+				if (i > 5)
+				{
+					variables = "_subcatchment_" + reportPollutantNames[i - 6];
+				}
 			}
 		}
 		if (filePath == FILE_PATH_NODES) {
@@ -770,18 +806,18 @@ int main(int argc, char* argv[])
 	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
 	//Read parameter from batch file
-	//or use default input files file
+	//or use default input file "model_post_process_input_parameters.csv"
 	if (argc == 1) {
-		CSV_PARAMETER_INPUT = CSV_PARAMETER_INPUT_CON;
+		CSV_PARAMETER_INPUT = "model_post_process_input_parameters_037.csv";
 	}
 	if (argc == 2) {
 		CSV_PARAMETER_INPUT = argv[1];
 	}
 
-	// Check if input parameters file exists in current working directory
+	// Check if "model_post_process_input_parameters.csv" exists in current working directory
 	check_file_exist(CSV_PARAMETER_INPUT);
 
-	// Read input parameters from input parameters file
+	// Read input parameters from  "model_post_process_input_parameters.csv" 
 	map<string, string> parameterList = readCSVContent(CSV_PARAMETER_INPUT);
 
 	outputPath = parameterList["reader_output_path"].c_str();
@@ -867,11 +903,6 @@ int main(int argc, char* argv[])
 		// Read Properties Section
 		readProperties(FOUT_FILE);
 
-		//check if the number of entries and variables match
-		subcatchmentVariables = checkVariables(subcatchmentVariables, SUBCATCHMENT_PAR_COUNT, FILE_PATH_SUBCATCHMENTS);
-		nodeVariables = checkVariables(nodeVariables, NODE_PAR_COUNT, FILE_PATH_NODES);
-		linkVariables = checkVariables(linkVariables, LINK_PAR_COUNT, FILE_PATH_LINKS);
-
 		// Build headers
 		cout << "Reading Link Names..." << endl;
 
@@ -935,6 +966,8 @@ int main(int argc, char* argv[])
 		// write subcatchments 
 		if (extractSubcatchments == 1 && selectedSubcatchmentsIndex.size() > 0)
 		{
+			//check if the number of entries and variables match
+			subcatchmentVariables = checkVariables(subcatchmentVariables, SUBCATCHMENT_PAR_COUNT, FILE_PATH_SUBCATCHMENTS);
 			// get the number of elements extracted, and add to vectot SUMMARY.INFO
 			subcatchmentsExtracted = selectedSubcatchmentsIndex.size();
 			SUMMARY_INFO.insert(make_pair("subcatchmentsExtracted", subcatchmentsExtracted));
@@ -946,6 +979,7 @@ int main(int argc, char* argv[])
 		// write node 
 		if (extractNodes == 1 && selectedNodesIndex.size() > 0)
 		{
+			nodeVariables = checkVariables(nodeVariables, NODE_PAR_COUNT, FILE_PATH_NODES);
 			// get the number of elements extracted, and add to vectot SUMMARY.INFO
 			nodesExtracted = selectedNodesIndex.size();
 			SUMMARY_INFO.insert(make_pair("nodesExtracted", nodesExtracted));
@@ -957,6 +991,7 @@ int main(int argc, char* argv[])
 		//  write links
 		if (extractLinks == 1 && selectedLinksIndex.size() > 0)
 		{
+			linkVariables = checkVariables(linkVariables, LINK_PAR_COUNT, FILE_PATH_LINKS);
 			linksExtracted = selectedLinksIndex.size();
 			SUMMARY_INFO.insert(make_pair("linksExtracted", linksExtracted));
 			// Write the extraction reulsts to the output file
