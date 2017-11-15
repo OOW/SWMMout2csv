@@ -1,4 +1,4 @@
-SWMMout2csv 0.8.5
+SWMMout2csv 0.8.6
 ==============
 Extracts reported elements from a SWMM '.out' file.
 

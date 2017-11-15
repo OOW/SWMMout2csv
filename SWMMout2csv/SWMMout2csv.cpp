@@ -1,5 +1,5 @@
 // SWMMout2csv.cpp : Defines the entry point for the console application.
-// SWMMout2csv version working 0.8.5
+// SWMMout2csv version working 0.8.6
 
 #include "stdafx.h"
 #include <stdio.h>     //printf, scanf, NULL 
@@ -17,11 +17,12 @@
 #include <exception>
 #include <cstddef>
 #include <map>
+
 using namespace std;
 
 // Define constants
 //Define input file names
-const char *version = "0.8.5";
+const char *version = "0.8.6";
 
 const char *CSV_PARAMETER_INPUT;
 const char *LOG_PATH;
@@ -190,6 +191,14 @@ void check_file_exist(string filename) {
 		exit(0);
 	}
 	file.close();
+}
+
+// get current working directory
+string workingdir()
+{
+	char buf[256];
+	GetCurrentDirectoryA(256, buf);
+	return string(buf) + '\\';
 }
 
 //Read "model_post_process_input_parameters.csv"
@@ -826,11 +835,15 @@ int main(int argc, char* argv[])
 	// "SWMMoutFileName" has multiple inputs(separated by ";"), save them into vector "SWMMOutputs"
 	vector<string> SWMMOutputs = readMutipleSWMMInput(parameterList["SWMMoutFileName"]);
 
+	//get working directory
+	string wd = workingdir();
+
 	// for each input in "SWMMoutFileName"
 	for (size_t i = 0; i < SWMMOutputs.size(); i++)
 	{
+		// set wd back to the original working directory
+		_chdir(wd.c_str());
 		clock_t begin = clock(); // save start time
-
 								 //Read in input files and start/end time
 		string combinedPath = combinePath(inputPath, SWMMOutputs[i]);
 		FILE_PATH_INPUT = combinedPath.c_str();
