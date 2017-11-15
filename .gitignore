@@ -240,3 +240,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+final_files/example/example_node_HGL.csv
+final_files/example/example_log.txt
+final_files/example/example_system_variables.csv
