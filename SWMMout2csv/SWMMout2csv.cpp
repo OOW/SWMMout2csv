@@ -32,7 +32,7 @@ const char *FILE_PATH_LINKS;
 const char *FILE_PATH_SYSTEM;
 const char *FILE_PATH_INPUT;
 
-//globe variables(since these varibales are called by multiple functions. they are defined as global to maintain the value from function to function)
+//globe variables(defined as global to maintain the value from function to function)
 static FILE *FOUT_FILE = NULL; // File pointer
 static int SUBCATCHMENT_COUNT, NODE_COUNT, LINK_COUNT, POLLUTANT_COUNT;
 static int NAMES_OFFSET, PROPERTIES_OFFSET, RESULTS_OFFSET, NTIMESTEPS;
@@ -194,8 +194,7 @@ void check_file_exist(string filename) {
 }
 
 // get current working directory
-string workingdir()
-{
+string workingdir() {
 	char buf[256];
 	GetCurrentDirectoryA(256, buf);
 	return string(buf) + '\\';
@@ -247,57 +246,52 @@ map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	return parameterList;
 }
 //read in multiple SWMM output files from input parameter .csv("model_post_process_input_parameters.csv")
-vector<string> readMutipleSWMMInput(string filePath) {
-	stringstream ss_input(filePath);
+vector<string> readMutipleSWMMOutput(string fileNames) {
+	stringstream ss_input(fileNames);
 	string temp;
 	vector<string> SWMMOutputs;
-	while (getline(ss_input, temp, ';'))
-	{
-		std::replace_if(temp.begin(), temp.end(), (std::function<int(BYTE)>)::isspace, ' ');
 
-		try
-		{
-			// check if at least one SWMM output file has been supplied in input parameter .csv
-			// if no, throw exception
-			if (temp != "") {
+	// check if at least one SWMM output file has been supplied in input parameter .csv
+	// if no, throw exception
+	try
+	{
+		if (fileNames != "") {
+
+			while (getline(ss_input, temp, ';'))
+			{
+				std::replace_if(temp.begin(), temp.end(), (std::function<int(BYTE)>)::isspace, ' ');
 				size_t f = temp.find_first_not_of(' ');
 				temp = temp.substr(f, temp.find_last_not_of(' ') - f + 1);
 				SWMMOutputs.push_back(temp);
 			}
-			else
-			{
-				throw "SWMM .out input file is requried!";
-			}
 		}
-		catch (const char *e)
-		{
-			cerr << e << endl;
+		else {
+			throw "SWMM .out input file is requried!";
 		}
-
+	}
+	catch (const char *e)
+	{
+		cerr << e << endl;
 	}
 	return SWMMOutputs;
 }
 // Open SWMM output file in binary mode
 void outputOpen(const char *filePath) {
-
 	try
-	{
-		if ((filePath != NULL) && (filePath[0] == '\0'))
-		{
-			throw "SWMM .out Binary File is required! Please check the input in ";
-		}
+	{   //check if SWMM .out file exists
+		check_file_exist(filePath);
 		// Open the file in binary mode
 		int eCount = fopen_s(&FOUT_FILE, filePath, "rb");
 
 		// Check if input file was opened correctly
 		if (eCount != 0)
-			cout << "Could not open " << filePath << endl;
+			throw "Cannot open SWMM output ";
 		else
 			cout << filePath << " opened successfully" << endl << '\n';
 	}
 	catch (const char* e)
 	{
-		cerr << "ERROR: " << filePath << e << CSV_PARAMETER_INPUT << endl;
+		cerr << "ERROR: " << e << filePath << endl;
 		exit(0);
 	}
 }
@@ -316,7 +310,7 @@ vector<string> readSelectedElements(const char *filePath) {
 			ifstream par; par.open(filePath);
 			if (!par)
 			{
-				throw " Could not open ";
+				throw " Cannot open ";
 			}
 			while (getline(par, line)) {
 				// remove trailing spaces
@@ -335,7 +329,7 @@ vector<string> readSelectedElements(const char *filePath) {
 	}
 	catch (const char * e)
 	{
-		cout << "Could not open " << filePath << endl;
+		cout << "Cannot open " << filePath << endl;
 		exit(0);
 	}
 	return nameList;
@@ -415,7 +409,7 @@ vector<size_t> readSelectedVariables(string parameterList) {
 		}
 		catch (const char * e)
 		{
-			cerr << e << "NOTICE: Please enter 0 or 1 !" << endl;
+			cerr << e << "NOTICE: Please enter 0 or 1!" << endl;
 			exit(0);
 		}
 	}
@@ -431,7 +425,7 @@ vector<size_t> checkVariables(vector<size_t>& variables, int parCount, const cha
 	if (filePath == FILE_PATH_LINKS) { variableName = "links"; }
 
 	if (variables.size() != (parCount - POLLUTANT_COUNT + 1)) {
-		cout << "ERROR: the number of your entries doesn't match the number of " << variableName << " variables" << endl; ;
+		cout << "ERROR: the number of your entries doesn't match the number of " << variableName << " variables" << endl;
 		exit(0);
 	}
 	// if need to export pollutants (last entry is 1),
@@ -815,25 +809,26 @@ int main(int argc, char* argv[])
 	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
 	//Read parameter from batch file
-	//or use default input file "model_post_process_input_parameters.csv"
+	//or use default input file "SWMMout2csv_input_086.csv"
 	if (argc == 1) {
-		CSV_PARAMETER_INPUT = "model_post_process_input_parameters_037.csv";
+		CSV_PARAMETER_INPUT = "SWMMout2csv_input_086.csv";
 	}
 	if (argc == 2) {
 		CSV_PARAMETER_INPUT = argv[1];
 	}
 
-	// Check if "model_post_process_input_parameters.csv" exists in current working directory
+	// Check if "SWMMout2csv_input_086.csv" exists in current working directory
 	check_file_exist(CSV_PARAMETER_INPUT);
 
-	// Read input parameters from  "model_post_process_input_parameters.csv" 
+	// Read input parameters from  "SWMMout2csv_input_086.csv" 
 	map<string, string> parameterList = readCSVContent(CSV_PARAMETER_INPUT);
 
 	outputPath = parameterList["reader_output_path"].c_str();
 	inputPath = parameterList["reader_input_path"].c_str();
 
 	// "SWMMoutFileName" has multiple inputs(separated by ";"), save them into vector "SWMMOutputs"
-	vector<string> SWMMOutputs = readMutipleSWMMInput(parameterList["SWMMoutFileName"]);
+	vector<string> SWMMOutputs = readMutipleSWMMOutput(parameterList["SWMMoutFileName"]);
+
 
 	//get working directory
 	string wd = workingdir();
@@ -853,7 +848,7 @@ int main(int argc, char* argv[])
 		FILE_PATH_NODES = combinedPathNode.c_str();
 		string combinedPathLink = combinePath(inputPath, parameterList["linksFileName"]);
 		FILE_PATH_LINKS = combinedPathLink.c_str();
-		// initial FILE_PATH_SYSTEM, just for file type recognition in function "generateFileName"
+		// initialize FILE_PATH_SYSTEM, just used for file type recognition in function "generateFileName"
 		FILE_PATH_SYSTEM = "";
 		string startTime = parameterList["reader_startDateTime"];
 		string endTime = parameterList["reader_endDateTime"];
@@ -870,7 +865,7 @@ int main(int argc, char* argv[])
 		vector<size_t> linkVariables = readSelectedVariables(parameterList["Link variables"]);
 		//vector<size_t> sysVariables;
 
-		// Read SWMM Binary input file -- open the file in binary mode, check if input file was opened correctly
+		// Read SWMM Binary .out file -- open the file in binary mode, check if input file was opened correctly
 		outputOpen(FILE_PATH_INPUT);
 
 		// Read selected elements from input files
@@ -886,7 +881,6 @@ int main(int argc, char* argv[])
 		if (startTime != "" && endTime == "")
 		{
 			startTime = dateTimeListFormat(startTime);
-
 		}
 		if (startTime != "" && endTime != "") {
 			startTime = dateTimeListFormat(startTime);
@@ -952,7 +946,7 @@ int main(int argc, char* argv[])
 
 
 		cout << "Matching element names..." << endl;
-		//get indexes for selected elements, these indexes will be used to extract selected elemets from reported elements later
+		//get indexes of selected elements, these indexes will be used to extract selected elemets from reported elements later
 		vector<size_t> selectedSubcatchmentsIndex = subsetSelectdElements(subcatchmentsNameList, reportSubcatchmentNames, FILE_PATH_SUBCATCHMENTS);
 		vector<size_t> selectedNodesIndex = subsetSelectdElements(nodesNameList, reportNodeNames, FILE_PATH_NODES);
 		vector<size_t> selectedLinksIndex = subsetSelectdElements(linksNameList, reportLinkNames, FILE_PATH_LINKS);
@@ -1096,8 +1090,6 @@ int main(int argc, char* argv[])
 
 
 		// Output elements extracted
-
-
 		cout << '\n' << "Elements Extracted:" << endl;
 		cout << "Subcatchments: " << subcatchmentsExtracted << endl;
 		cout << "Nodes: " << nodesExtracted << endl;
