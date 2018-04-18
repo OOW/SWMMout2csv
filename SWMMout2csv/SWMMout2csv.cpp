@@ -246,7 +246,7 @@ map<string, string> readCSVContent(const char * CSV_PARAMETER_INPUT) {
 	return parameterList;
 }
 //read in multiple SWMM output files from input parameter .csv("model_post_process_input_parameters.csv")
-vector<string> readMutipleSWMMOutput(string fileNames) {
+vector<string> readMultipleSWMMOutput(string fileNames) {
 	stringstream ss_input(fileNames);
 	string temp;
 	vector<string> SWMMOutputs;
@@ -827,7 +827,7 @@ int main(int argc, char* argv[])
 	inputPath = parameterList["reader_input_path"].c_str();
 
 	// "SWMMoutFileName" has multiple inputs(separated by ";"), save them into vector "SWMMOutputs"
-	vector<string> SWMMOutputs = readMutipleSWMMOutput(parameterList["SWMMoutFileName"]);
+	vector<string> SWMMOutputs = readMultipleSWMMOutput(parameterList["SWMMoutFileName"]);
 
 
 	//get working directory
