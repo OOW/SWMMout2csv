@@ -1,7 +1,7 @@
 // SWMMout2csv.cpp : Defines the entry point for the console application.
-// SWMMout2csv version working 0.8.6
+// SWMMout2csv version working 0.8.7 11/20/2019
 
-#include "stdafx.h"
+// #include "stdafx.h"
 #include <stdio.h>     //printf, scanf, NULL 
 #include <iostream>
 #include <vector>
@@ -22,7 +22,7 @@ using namespace std;
 
 // Define constants
 //Define input file names
-const char *version = "0.8.6";
+const char *version = "0.8.7";
 
 const char *CSV_PARAMETER_INPUT;
 const char *LOG_PATH;
@@ -809,9 +809,9 @@ int main(int argc, char* argv[])
 	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 
 	//Read parameter from batch file
-	//or use default input file "SWMMout2csv_input_086.csv"
+	//or use default input file "SWMMout2csv_input_087.csv"
 	if (argc == 1) {
-		CSV_PARAMETER_INPUT = "SWMMout2csv_input_086.csv";
+		CSV_PARAMETER_INPUT = "SWMMout2csv_input_087.csv";
 	}
 	if (argc == 2) {
 		CSV_PARAMETER_INPUT = argv[1];
@@ -909,6 +909,14 @@ int main(int argc, char* argv[])
 		readTail(FOUT_FILE);
 		// Read Properties Section
 		readProperties(FOUT_FILE);
+
+		// Check for error and end execution if any are found
+		if (SUMMARY_INFO["errorcode"] != 0) {
+			cout << "I'm sorry but there are errors, terminating program: error code: " << SUMMARY_INFO["errorcode"] ;
+			// write the summary information to log.txt
+			writeLogTXT("error.txt", 0);
+			return 0;
+		}
 
 		// Build headers
 		cout << "Reading Link Names..." << endl;
